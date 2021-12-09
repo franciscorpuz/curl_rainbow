@@ -7,3 +7,4 @@ python3 -m pip install kornia --no-cache-dir
 python3 -m pip install atari-py --no-cache-dir
 python3 -m pip install tqdm --no-cache-dir
 python3 -m pip install plotly --no-cache-dir
+python3 -m pip install autorom[accept-rom-license] --no-cache-dir
