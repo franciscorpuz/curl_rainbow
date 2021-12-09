@@ -17,8 +17,16 @@ import kornia.augmentation as aug
 import torch.nn as nn
 from model import DQN
 
-random_shift = nn.Sequential(aug.RandomCrop((80, 80)), nn.ReplicationPad2d(4), aug.RandomCrop((84, 84)))
-aug = random_shift
+# random_shift = nn.Sequential(aug.RandomCrop((80, 80)), nn.ReplicationPad2d(4), aug.RandomCrop((84, 84)))
+# aug = random_shift
+
+# added additional Data Augmentations
+random_crop = nn.Sequential(aug.RandomCrop((80, 80)), nn.ReplicationPad2d(4), aug.RandomCrop((84, 84)))
+random_cutout = aug.RandomErasing(p=0.5)
+random_flip = aug.RandomHorizontalFlip(p=0.5)
+random_rotate = aug.RandomRotation((-30,30), p=0.5)
+
+aug_funcs = [random_crop, random_cutout, random_flip, random_rotate]
 
 class Agent():
   def __init__(self, args, env):
@@ -80,8 +88,21 @@ class Agent():
   def learn(self, mem):
     # Sample transitions
     idxs, states, actions, returns, next_states, nonterminals, weights = mem.sample(self.batch_size)
-    aug_states_1 = aug(states).to(device=self.args.device)
-    aug_states_2 = aug(states).to(device=self.args.device)
+    
+    
+    # augmentations - ADDED
+    # stacking of augmentations
+    for augment in list(augs.strip()):
+        states = aug_funcs[int(augment)](states)    
+    
+    aug_states_1 = states.to(device=self.args.device)
+    aug_states_2 = states.to(device=self.args.device)
+    
+    # original
+    # aug_states_1 = aug(states).to(device=self.args.device)
+    # aug_states_2 = aug(states).to(device=self.args.device)
+    
+    
     # Calculate current state probabilities (online network noise already sampled)
     log_ps, _ = self.online_net(states, log=True)  # Log probabilities log p(s_t, ·; θonline)
     _, z_anch = self.online_net(aug_states_1, log=True)
